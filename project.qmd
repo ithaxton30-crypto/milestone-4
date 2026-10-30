@@ -1,0 +1,65 @@
+---
+title: "Global Coral Reef & Bleaching Analysis"
+format: html
+execute:
+  echo: false
+  message: false
+  warning: false
+---
+
+```{r}
+library(tidyverse)
+```
+
+## High-Resolution Global Mass Coral Bleaching Dataset V2.0 (`zenodo.org/records/6780843`)
+
+```{r}
+# Read Zenodo 6780843 (Urcelay & Donner V2.0)
+zenodo_data <- read_csv("data/zenodo_6780843.csv", show_col_types = FALSE) |>
+  filter(
+    !is.na(LATITUDE), !is.na(LONGITUDE),
+    !is.na(OCEAN_REGION)
+  )
+
+zenodo_data |>
+  ggplot(aes(x = LONGITUDE, y = LATITUDE, color = OCEAN_REGION)) +
+  geom_point(alpha = 0.4, size = 1.2) +
+  scale_color_brewer(palette = "Set2") +
+  coord_quickmap() +
+  labs(
+    title = "Global Coral Reefs by Ocean Region",
+    subtitle = "Each point represents a surveyed coral reef site colored by its ocean region",
+    x = "Longitude (°E / °W)",
+    y = "Latitude (°N / °S)",
+    color = "Ocean Region",
+    caption = "Source: Urcelay & Donner V2.0 (https://zenodo.org/records/6780843)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  guides(color = guide_legend(override.aes = list(alpha = 1, size = 3)))
+```
+
+```{r}
+# Plot heat/thermal stress (y-axis) vs. amount of bleaching (x-axis)
+zenodo_data |>
+  filter(
+    !is.na(PCT_BLEACHED), PCT_BLEACHED >= 0, PCT_BLEACHED <= 100,
+    !is.na(CRW_DHW), CRW_DHW >= 0, CRW_DHW <= 25
+  ) |>
+  ggplot(aes(x = PCT_BLEACHED, y = CRW_DHW, color = OCEAN_REGION)) +
+  geom_point(alpha = 0.25, size = 1.2) +
+  geom_smooth(aes(group = 1), method = "gam", color = "#b30000", linewidth = 1.1, se = TRUE) +
+  scale_x_continuous(labels = scales::label_percent(scale = 1)) +
+  scale_color_brewer(palette = "Set2") +
+  labs(
+    title = "Heat Stress vs. Amount of Coral Bleaching",
+    subtitle = "Higher heat accumulation (Degree Heating Weeks) corresponds to greater coral bleaching",
+    x = "Amount of Bleaching (% of Coral Bleached)",
+    y = "Heat Stress (Degree Heating Weeks, °C-weeks)",
+    color = "Ocean Region",
+    caption = "Source: Urcelay & Donner V2.0 (https://zenodo.org/records/6780843)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  guides(color = guide_legend(override.aes = list(alpha = 1, size = 3)))
+```
